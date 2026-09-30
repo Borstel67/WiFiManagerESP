@@ -1,0 +1,15 @@
+# Build-Ausgaben
+build/
+obj/
+__vm/
+*.bin
+
+# Visual Studio / IDE (lokal)
+.vs/
+*.vcxproj.user
+.vscode/c_cpp_properties.json
+.theia/
+
+# Lokale Claude-/MCP-Konfiguration
+.claude/
+.mcp.json

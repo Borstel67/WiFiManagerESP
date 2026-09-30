@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Wi-Fi STA Einstellungen</title>
+    <link rel="stylesheet" type="text/css" href="WifiManager.css">
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="title">
+                <div class="logo" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="wifi-icon" aria-hidden="true">
+                        <path d="M12 18.5c.7 0 1.25.55 1.25 1.25S12.7 21 12 21s-1.25-.55-1.25-1.25S11.3 18.5 12 18.5z" />
+                        <path d="M8.5 16a6 6 0 0 1 7 0" />
+                        <path d="M6 13a9 9 0 0 1 12 0" />
+                        <path d="M3.5 10a12 12 0 0 1 17 0" />
+                    </svg>
+                </div>
+                <div>
+                    <h1>Wi-Fi STA Manager</h1>
+                    <div id="ap-host" class="hint" style="margin: 0"></div>
+                </div>
+            </div>
+            <div class="actions">
+                <a class="gear" href="/" title="Zurück zur Startseite" aria-label="Startseite">⚙️</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <section class="sec">
+                <h2>Netzwerkmodus</h2>
+
+                <form id="netForm" autocomplete="off">
+                    <div class="row">
+                        <label>Modus</label>
+                        <label class="switch"><input type="radio" name="mode" value="dhcp" checked /> DHCP</label>
+                        <label class="switch"><input type="radio" name="mode" value="static" /> Static</label>
+                    </div>
+
+                    <div id="staticFields">
+                        <div class="row"><label for="ip">IP</label><input id="ip" class="input grow" type="text" placeholder="192.168.1.50" /></div>
+                        <div class="row"><label for="gw">Gateway</label><input id="gw" class="input grow" type="text" placeholder="192.168.1.1" /></div>
+                        <div class="row"><label for="sn">Subnetz</label><input id="sn" class="input grow" type="text" placeholder="255.255.255.0" /></div>
+                        <div class="row"><label for="dns1">DNS1</label><input id="dns1" class="input grow" type="text" placeholder="1.1.1.1" /></div>
+                        <div class="row"><label for="dns2">DNS2</label><input id="dns2" class="input grow" type="text" placeholder="8.8.8.8" /></div>
+                        <div class="row"><label for="ntp1">NTP 1</label><input id="ntp1" class="input grow" type="text" placeholder="pool.ntp.org" /></div>
+                        <div class="row"><label for="ntp2">NTP 2</label><input id="ntp2" class="input grow" type="text" placeholder="time.nist.gov" /></div>
+                        <div class="row"><label for="ntp3">NTP 3</label><input id="ntp3" class="input grow" type="text" placeholder="time.google.com" /></div>
+                    </div>
+
+                    <div class="row">
+                        <label for="hostname">Hostname</label>
+                        <input id="hostname" class="input grow" name="hostname" type="text" placeholder="mein-esp" />
+                    </div>
+
+                    <p class="hint">Die Konfiguration wird in <code>/config.json</code> gespeichert und beim STA-Start geladen.</p>
+
+                    <div class="footer">
+                        <button id="btn-save" class="btn primary" type="submit">Speichern</button>
+                    </div>
+                </form>
+
+                <p id="msg" class="hint" style="min-height: 1.2em"></p>
+            </section>
+        </div>
+
+        <details class="accordion sec">
+            <summary>
+                <span>Erweiterte Optionen</span>
+                <span class="chev">▶</span>
+            </summary>
+            <div class="sec acc">
+                <div class="danger-zone">
+                    <h3>Gefährlicher Bereich <span class="pill">admin</span></h3>
+                    <p class="hint">Löschen Sie die <code>.json</code>-Dateien (außer den geschützten) und starten Sie das Gerät neu.</p>
+                    <div class="row">
+                        <label for="confirm">Bestätigen</label>
+                        <input id="confirm" class="input grow" placeholder="Schreiben Sie BESTÄTIGEN, um die Dateien zu löschen" />
+                    </div>
+                    <div class="row">
+                        <label></label>
+                        <button id="btn-erase" class="btn danger" type="button" disabled>🗑️ Anmeldedaten löschen und neu starten</button>
+                        <button id="btn-reload" class="btn ghost" type="button" style="display: none">Aktualisieren</button>
+                    </div>
+                    <p id="erase-msg" class="hint" style="min-height: 1.2em"></p>
+                </div>
+            </div>
+        </details>
+
+        <footer class="copyright">
+            © 2025 AyresNet © 2026 R.Wisser · <span id="ver-footer"></span>
+        </footer>
+    </div>
+
+    <script>
+        (function () {
+            const VERSION = "2.0.3";
+            const form = document.getElementById("netForm");
+            const msg = document.getElementById("msg");
+            const staticFields = document.getElementById("staticFields");
+            const btnSave = document.getElementById("btn-save");
+            document.getElementById("ver-footer").textContent = "v" + VERSION;
+            document.getElementById("ap-host").textContent = "Host: " + (location.hostname || "device.local");
+            function mode() { return [...document.querySelectorAll('input[name="mode"]')].find(r => r.checked).value; }
+            function setUi() { const isStatic = mode() === "static"; staticFields.style.display = isStatic ? "block" : "none"; staticFields.querySelectorAll("input").forEach(i => i.disabled = !isStatic); }
+            document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener("change", setUi));
+            async function loadConfig() { try { const r = await fetch("/api/sta/config", { cache: "no-store" }); const c = await r.json(); document.querySelector(`input[name="mode"][value="${c.dhcp ? "dhcp" : "static"}"]`).checked = true; ip.value = c.ip || ""; gw.value = c.gw || ""; sn.value = c.sn || ""; dns1.value = c.dns1 || ""; dns2.value = c.dns2 || ""; ntp1.value = c.ntp1 || ""; ntp2.value = c.ntp2 || ""; ntp3.value = c.ntp3 || ""; if (document.getElementById("hostname")) hostname.value = c.hostname || ""; setUi(); } catch { msg.className = "hint err"; msg.textContent = "Konfiguration konnte nicht geladen werden."; } }
+            form.addEventListener("submit", async (e) => { e.preventDefault(); btnSave.disabled = true; btnSave.textContent = "Wird gespeichert…"; const body = new URLSearchParams(); body.set("dhcp", mode() === "dhcp" ? "1" : "0"); body.set("ip", ip.value.trim()); body.set("gw", gw.value.trim()); body.set("sn", sn.value.trim()); body.set("dns1", dns1.value.trim()); body.set("dns2", dns2.value.trim()); if (document.getElementById("hostname")) body.set("hostname", hostname.value.trim()); body.set("ntp1", ntp1.value.trim()); body.set("ntp2", ntp2.value.trim()); body.set("ntp3", ntp3.value.trim()); try { const r = await fetch("/api/sta/config", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body }); const j = await r.json(); if (!r.ok || !j.ok) { msg.className = "hint err"; msg.textContent = j.error || "Speichern fehlgeschlagen."; return; } msg.className = "hint ok"; msg.textContent = "Gespeichert. Werte werden bei STA-Start aus /config.json geladen."; } catch { msg.className = "hint err"; msg.textContent = "Fehler beim Speichern."; } finally { btnSave.disabled = false; btnSave.textContent = "Speichern"; } });
+            setUi();
+            loadConfig();
+        })();
+    </script>
+    <script>
+        async function loadWifiConfig() {
+            try {
+                const resp = await fetch('/config.json', { cache: 'no-store' });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (!data) return;
+                if (document.getElementById('ip')) document.getElementById('ip').value = data.ip || '';
+                if (document.getElementById('gw')) document.getElementById('gw').value = data.gw || '';
+                if (document.getElementById('sn')) document.getElementById('sn').value = data.sn || '';
+                if (document.getElementById('dns1')) document.getElementById('dns1').value = data.dns1 || '';
+                if (document.getElementById('dns2')) document.getElementById('dns2').value = data.dns2 || '';
+                if (document.getElementById('hostname')) document.getElementById('hostname').value = data.hostname || '';
+                if (data.ntp1) ntp1.value = data.ntp1;
+                if (data.ntp2) ntp2.value = data.ntp2;
+                if (data.ntp3) ntp3.value = data.ntp3;
+            } catch (e) { }
+        }
+        window.addEventListener('DOMContentLoaded', loadWifiConfig);
+    </script>
+    <script>
+        if (document.getElementById("confirm") && document.getElementById("btn-erase")) {
+            const confirm = document.getElementById("confirm");
+            const btnErase = document.getElementById("btn-erase");
+            const eraseMsg = document.getElementById("erase-msg");
+            const btnReload = document.getElementById("btn-reload");
+            confirm.addEventListener("input", () => { const ok = confirm.value.trim().toUpperCase() === "BESTÄTIGEN"; btnErase.disabled = !ok; if (eraseMsg) eraseMsg.textContent = ok ? "Bereit zum Löschen." : ""; });
+            btnErase.addEventListener("click", async () => {
+                if (btnErase.disabled) return;
+                btnErase.disabled = true;
+                btnErase.textContent = "Wird gelöscht…";
+                if (eraseMsg) eraseMsg.textContent = "Anmeldedaten werden gelöscht und Neustart…";
+                try {
+                    const body = new URLSearchParams();
+                    body.set("confirm", "BESTÄTIGEN");
+                    await fetch("/erase", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, });
+                    if (btnReload) btnReload.style.display = "inline-block";
+                } catch (e) {
+                    console.error(e);
+                    if (eraseMsg) eraseMsg.textContent = "Fehler beim Anfordern der Löschung.";
+                    btnErase.disabled = false;
+                    btnErase.textContent = "🗑️ Anmeldedaten löschen und neu starten";
+                }
+            });
+            if (btnReload) { btnReload.addEventListener("click", () => location.reload()); }
+        }
+    </script>
+</body>
+</html>

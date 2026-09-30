@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Wi-Fi Manager</title>
+    <link rel="stylesheet" type="text/css" href="WifiManager.css">
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="title">
+                <div class="logo" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" class="wifi-icon" aria-hidden="true">
+                        <path d="M12 18.5c.7 0 1.25.55 1.25 1.25S12.7 21 12 21s-1.25-.55-1.25-1.25S11.3 18.5 12 18.5z" />
+                        <path d="M8.5 16a6 6 0 0 1 7 0" />
+                        <path d="M6 13a9 9 0 0 1 12 0" />
+                        <path d="M3.5 10a12 12 0 0 1 17 0" />
+                    </svg>
+                </div>
+                <div>
+                    <h1>Wi-Fi Manager</h1>
+                    <div class="hint" style="margin:0">AP: <span id="ap-host"></span></div>
+                </div>
+            </div>
+            <div class="actions">
+                <a class="gear" href="/settings" title="Einstellungen" aria-label="Einstellungen">⚙️</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <section class="sec">
+                <h2>Willkommen</h2>
+                <p class="hint">Dies ist die Startseite. Verwende das Zahnrad oben rechts, um die vollständigen Einstellungen zu öffnen.</p>
+                <div class="row">
+                    <label></label>
+                    <a class="btn primary" href="/settings">Zu den Einstellungen</a>
+                </div>
+            </section>
+            <section class="sec">
+                <h2>Status</h2>
+                <div class="hint">Portal erreichbar unter: <code id="portal-url">http://192.168.4.1</code></div>
+            </section>
+        </div>
+
+        <footer class="copyright">
+            © 2026 R.Wisser · <span id="ver-footer"></span>
+        </footer>
+    </div>
+
+    <script>
+        (function () {
+            const VERSION = "2.0.4";
+            document.getElementById("ver-footer").textContent = "v" + VERSION;
+            document.getElementById("ap-host").textContent = location.hostname || "192.168.4.1";
+            document.getElementById("portal-url").textContent = "http://" + (location.host || "192.168.4.1");
+        })();
+    </script>
+</body>
+</html>

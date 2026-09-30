@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Zugangsdaten gespeichert</title>
+    <link rel="stylesheet" type="text/css" href="WifiManager.css">
+</head>
+<body>
+    <main class="card" role="status" aria-live="polite">
+        <!-- SVG icon with cross + pulse -->
+        <div class="icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="var(--accent2)" />
+                        <stop offset="100%" stop-color="var(--accent)" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Pulsing arc (outline only) -->
+                <circle
+                    class="pulse"
+                    cx="32"
+                    cy="32"
+                    r="23"
+                    fill="none"
+                    stroke="url(#g)"
+                    stroke-width="4" />
+
+                <!-- Background disc -->
+                <circle class="disc" cx="32" cy="32" r="22" fill="url(#g)" />
+
+                <!-- Rounded checkmark -->
+                <path
+                    d="M22.5 33.5 L29 40.2 L43 24.8"
+                    fill="none"
+                    stroke="#fff"
+                    stroke-width="4.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+        </div>
+        <div class="center">
+            <h1>Zugangsdaten<br /> gespeichert</h1>
+        </div>
+        <div class="center">
+            <p class="muted">Das Gerät wird neu gestartet, um eine Verbindung zu Ihrem WLAN herzustellen.</p>
+        </div>
+        <div class="center">
+            <p class="small">Falls es später nicht in Ihrem Netzwerk angezeigt wird, prüfen Sie das Passwort oder bringen Sie das Gerät näher an den Router.</p>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Wi-Fi Einstellungen</title>
+    <link rel="stylesheet" type="text/css" href="WifiManager.css">
+</head>
+<body>
+    <div id="app-root"></div>
+
+    <!-- STA-Template -->
+    <template id="tmpl-sta">
+        <div class="app">
+            <div class="header">
+                <div class="title">
+                    <div class="logo" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" class="wifi-icon" aria-hidden="true">
+                            <path d="M12 18.5c.7 0 1.25.55 1.25 1.25S12.7 21 12 21s-1.25-.55-1.25-1.25S11.3 18.5 12 18.5z" />
+                            <path d="M8.5 16a6 6 0 0 1 7 0" />
+                            <path d="M6 13a9 9 0 0 1 12 0" />
+                            <path d="M3.5 10a12 12 0 0 1 17 0" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1>Wi-Fi STA Manager</h1>
+                        <div class="hint" style="margin: 0" data-sta-host></div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <a class="gear" href="/" title="Zurück zur Startseite" aria-label="Startseite">⚙️</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <section class="sec">
+                    <h2>Netzwerkmodus</h2>
+                    <form id="sta-form" autocomplete="off">
+                        <div class="row">
+                            <label for="sta-ssid">SSID</label>
+                            <input id="sta-ssid" class="input grow" type="text" readonly />
+                        </div>
+                        <div class="row">
+                            <label>Modus</label>
+                            <label class="switch">
+                                <input type="radio" name="sta-mode" value="dhcp" checked />
+                                DHCP</label>
+                            <label class="switch">
+                                <input type="radio" name="sta-mode" value="static" />
+                                Static</label>
+                        </div>
+
+                        <div id="sta-static">
+                            <div class="row">
+                                <label for="sta-ip">IP</label><input id="sta-ip" class="input grow" type="text" placeholder="192.168.1.50" /></div>
+                            <div class="row">
+                                <label for="sta-gw">Gateway</label><input id="sta-gw" class="input grow" type="text" placeholder="192.168.1.1" /></div>
+                            <div class="row">
+                                <label for="sta-sn">Subnetz</label><input id="sta-sn" class="input grow" type="text" placeholder="255.255.255.0" /></div>
+                            <div class="row">
+                                <label for="sta-dns1">DNS1</label><input id="sta-dns1" class="input grow" type="text" placeholder="1.1.1.1" /></div>
+                            <div class="row">
+                                <label for="sta-dns2">DNS2</label><input id="sta-dns2" class="input grow" type="text" placeholder="8.8.8.8" /></div>
+                        </div>
+
+                        <div class="row">
+                            <label for="sta-ntp1">NTP 1</label><input id="sta-ntp1" class="input grow" type="text" placeholder="pool.ntp.org" /></div>
+                        <div class="row">
+                            <label for="sta-ntp2">NTP 2</label><input id="sta-ntp2" class="input grow" type="text" placeholder="time.nist.gov" /></div>
+
+                        <div class="row">
+                            <label for="sta-hostname">Hostname</label>
+                            <input id="sta-hostname" class="input grow" type="text" placeholder="mein-esp" />
+                        </div>
+
+                        <p class="hint">Die Konfiguration wird in <code>/config.json</code> gespeichert und beim STA-Start geladen.</p>
+                        <div class="footer">
+                            <button id="sta-btn-save" class="btn primary" type="submit">Speichern</button></div>
+                    </form>
+                    <p id="sta-msg" class="hint" style="min-height: 1.2em"></p>
+                </section>
+            </div>
+
+            <details class="accordion sec">
+                <summary><span>Erweiterte Optionen</span><span class="chev">▶</span></summary>
+                <div class="sec acc">
+                    <div class="danger-zone">
+                        <h3>Gefährlicher Bereich <span class="pill">admin</span></h3>
+                        <p class="hint">
+                            Löschen der <code>config.json</code> Datei aus dem geschützten Bereich und starte das Gerät neu.<br>
+                            Schreiben Sie BESTÄTIGEN, um die Datei zu löschen
+                        </p>
+                        <div class="row">
+                            <label for="sta-confirm">Bestätigen</label>
+                            <input id="sta-confirm" class="input grow" placeholder="BESTÄTIGEN" />
+                        </div>
+                        <div class="row">
+                            <label></label>
+                            <button id="sta-btn-erase" class="btn danger" type="button" disabled>🗑️ Anmeldedaten löschen und neu starten</button>
+                            <button id="sta-btn-reload" class="btn ghost" type="button" style="display: none">Aktualisieren</button>
+                        </div>
+                        <p id="sta-erase-msg" class="hint" style="min-height: 1.2em"></p>
+                    </div>
+                </div>
+            </details>
+
+            <footer class="copyright">© 2026 R.Wisser · <span class="ver"></span></footer>
+        </div>
+    </template>
+
+    <!-- AP-Template -->
+    <template id="tmpl-ap">
+        <div class="app">
+            <div class="header">
+                <div class="title">
+                    <div class="logo" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" class="wifi-icon" aria-hidden="true">
+                            <path d="M12 18.5c.7 0 1.25.55 1.25 1.25S12.7 21 12 21s-1.25-.55-1.25-1.25S11.3 18.5 12 18.5z" />
+                            <path d="M8.5 16a6 6 0 0 1 7 0" />
+                            <path d="M6 13a9 9 0 0 1 12 0" />
+                            <path d="M3.5 10a12 12 0 0 1 17 0" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1>Wi-Fi Manager</h1>
+                        <div class="hint" style="margin: 0" data-ap-host></div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <a class="gear" href="/" title="Zurück zur Startseite" aria-label="Startseite">⚙️</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <section class="sec">
+                    <h2>Verfügbare Netzwerke</h2>
+                    <div class="toolbar">
+                        <input id="ap-filter" class="input" type="search" placeholder="SSID filtern…" inputmode="search" />
+                        <button id="ap-btn-scan" class="btn" type="button">Erneut scannen</button>
+                        <label class="switch">
+                            <input id="ap-auto" type="checkbox" checked />
+                            <span id="ap-autoTxt"></span>
+                        </label>
+                    </div>
+                    <div id="ap-status" class="hint" style="margin-top: 8px">Wird gescannt…</div>
+                    <ul id="ap-list" class="list" aria-live="polite"></ul>
+                    <div id="ap-empty" class="hint" style="display: none">Keine Netzwerke gefunden. Versuchen Sie erneut zu scannen.</div>
+                </section>
+
+                <section class="sec">
+                    <h2>Netzwerkmodus</h2>
+                    <form id="ap-form" method="POST" action="/save" autocomplete="off">
+                        <div class="row">
+                            <label for="ap-ssid">SSID</label><input id="ap-ssid" class="input grow" name="ssid" required placeholder="Netzwerkname" /></div>
+                        <div class="row">
+                            <label for="ap-password">Passwort</label><input id="ap-password" class="input grow" name="password" type="password" required minlength="8" placeholder="Passwort" /></div>
+                        <div class="row">
+                            <label></label>
+                            <label class="switch">
+                                <input id="ap-show" type="checkbox" />
+                                Passwort anzeigen</label></div>
+                        <div class="row">
+                            <label>Modus</label>
+                            <label class="switch">
+                                <input type="radio" name="ap-dhcp" value="true" checked />
+                                DHCP</label>
+                            <label class="switch">
+                                <input type="radio" name="ap-dhcp" value="false" />
+                                Static</label>
+                        </div>
+                        <div id="ap-static" style="display: none;">
+                            <div class="row">
+                                <label for="ap-ip">IP-Adresse</label><input id="ap-ip" class="input grow" name="ip" type="text" placeholder="192.168.1.100" /></div>
+                            <div class="row">
+                                <label for="ap-gw">Gateway</label><input id="ap-gw" class="input grow" name="gw" type="text" placeholder="192.168.1.1" /></div>
+                            <div class="row">
+                                <label for="ap-sn">Subnetz</label><input id="ap-sn" class="input grow" name="sn" type="text" placeholder="255.255.255.0" /></div>
+                            <div class="row">
+                                <label for="ap-dns1">DNS 1</label><input id="ap-dns1" class="input grow" name="dns1" type="text" placeholder="8.8.8.8" /></div>
+                            <div class="row">
+                                <label for="ap-dns2">DNS 2</label><input id="ap-dns2" class="input grow" name="dns2" type="text" placeholder="8.8.4.4" /></div>
+                        </div>
+                        <div class="row">
+                            <label for="ap-ntp1">NTP 1</label><input id="ap-ntp1" name="ntp1" class="input grow" type="text" placeholder="pool.ntp.org" /></div>
+                        <div class="row">
+                            <label for="ap-ntp2">NTP 2</label><input id="ap-ntp2" name="ntp2" class="input grow" type="text" placeholder="time.nist.gov" /></div>
+                        <div class="row">
+                            <label for="ap-hostname">Hostname</label><input id="ap-hostname" class="input grow" name="hostname" type="text" placeholder="mein-esp" /></div>
+                        <p class="hint">Die Konfiguration wird in <code>/config.json</code> gespeichert und beim STA-Start geladen.</p>
+                        <div class="footer">
+                            <button id="ap-btn-save" class="btn primary" type="submit">Speichern und verbinden</button></div>
+                    </form>
+                    <p id="ap-msg" class="hint" style="min-height: 1.2em"></p>
+                </section>
+
+                <details class="accordion sec">
+                    <summary><span>Erweiterte Optionen</span><span class="chev">▶</span></summary>
+                    <div class="sec acc">
+                        <div class="danger-zone">
+                            <h3>Gefährlicher Bereich <span class="pill">admin</span></h3>
+                            <p class="hint">
+                                Löschen der <code>config.json</code> Datei aus dem geschützten Bereich und starte das Gerät neu.<br>
+                                Schreiben Sie BESTÄTIGEN, um die Datei zu löschen
+                            </p>
+                            <div class="row">
+                                <label for="ap-confirm">Bestätigen</label>
+                                <input id="ap-confirm" class="input grow" placeholder="BESTÄTIGEN" />
+                            </div>
+                            <div class="row">
+                                <label></label>
+                                <button id="ap-btn-erase" class="btn danger" type="button" disabled>🗑️ Anmeldedaten löschen und neu starten</button>
+                                <button id="ap-btn-reload" class="btn ghost" type="button" style="display: none">Aktualisieren</button>
+                            </div>
+                            <p id="ap-erase-msg" class="hint" style="min-height: 1.2em"></p>
+                        </div>
+                    </div>
+                </details>
+
+                <section class="sec">
+                    <div class="hint">Wenn sich das Portal nicht von selbst öffnet, stellen Sie eine Verbindung zum AP her und gehen Sie zu <code id="ap-portal-url">http://192.168.4.1</code>.</div>
+                </section>
+            </div>
+
+            <footer class="copyright">© 2026 R.Wisser · <span class="ver"></span></footer>
+        </div>
+    </template>
+
+    <script>
+        (function () {
+            const VERSION = "2.0.4";
+            const root = document.getElementById("app-root");
+
+            const render = (tplId) => {
+                root.innerHTML = "";
+                const tpl = document.getElementById(tplId);
+                root.appendChild(tpl.content.cloneNode(true));
+                root.querySelectorAll(".ver").forEach(el => el.textContent = "v" + VERSION);
+            };
+
+            const tryLoadStaConfig = async () => {
+                try {
+                    const r = await fetch("/api/sta/config", { cache: "no-store" });
+                    if (!r.ok) return null;
+                    return await r.json();
+                } catch { return null; }
+            };
+
+            const setupSta = (cfg) => {
+                const form = root.querySelector("#sta-form");
+                const msg = root.querySelector("#sta-msg");
+                const staticFields = root.querySelector("#sta-static");
+                const btnSave = root.querySelector("#sta-btn-save");
+                root.querySelector("[data-sta-host]").textContent = "Host: " + (location.hostname || "device.local");
+
+                const mode = () => [...form.querySelectorAll('input[name="sta-mode"]')].find(r => r.checked).value;
+                const setUi = () => {
+                    const isStatic = mode() === "static";
+                    staticFields.style.display = isStatic ? "block" : "none";
+                    staticFields.querySelectorAll("input").forEach(i => i.disabled = !isStatic);
+                };
+                form.querySelectorAll('input[name="sta-mode"]').forEach(r => r.addEventListener("change", setUi));
+
+                const fill = (c) => {
+                    root.querySelector("#sta-ssid").value = c.ssid ? c.ssid + (c.rssi ? " (" + c.rssi + " dBm)" : "") : "–";
+                    form.querySelector('input[name="sta-mode"][value="' + (c.dhcp ? "dhcp" : "static") + '"]').checked = true;
+                    root.querySelector("#sta-ip").value = c.ip || "";
+                    root.querySelector("#sta-gw").value = c.gw || "";
+                    root.querySelector("#sta-sn").value = c.sn || "";
+                    root.querySelector("#sta-dns1").value = c.dns1 || "";
+                    root.querySelector("#sta-dns2").value = c.dns2 || "";
+                    root.querySelector("#sta-ntp1").value = c.ntp1 || "";
+                    root.querySelector("#sta-ntp2").value = c.ntp2 || "";
+                    root.querySelector("#sta-hostname").value = c.hostname || "";
+                    setUi();
+                };
+                fill(cfg);
+
+                form.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    btnSave.disabled = true; btnSave.textContent = "Wird gespeichert…";
+                    const body = new URLSearchParams();
+                    body.set("dhcp", mode() === "dhcp" ? "1" : "0");
+                    body.set("ip", root.querySelector("#sta-ip").value.trim());
+                    body.set("gw", root.querySelector("#sta-gw").value.trim());
+                    body.set("sn", root.querySelector("#sta-sn").value.trim());
+                    body.set("dns1", root.querySelector("#sta-dns1").value.trim());
+                    body.set("dns2", root.querySelector("#sta-dns2").value.trim());
+                    body.set("hostname", root.querySelector("#sta-hostname").value.trim());
+                    body.set("ntp1", root.querySelector("#sta-ntp1").value.trim());
+                    body.set("ntp2", root.querySelector("#sta-ntp2").value.trim());
+                    try {
+                        const r = await fetch("/api/sta/config", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
+                        const j = await r.json();
+                        if (!r.ok || !j.ok) { msg.className = "hint err"; msg.textContent = j.error || "Speichern fehlgeschlagen."; return; }
+                        msg.className = "hint ok"; msg.textContent = "Gespeichert. Werte werden bei STA-Start aus /config.json geladen.";
+                    } catch { msg.className = "hint err"; msg.textContent = "Fehler beim Speichern."; }
+                    finally { btnSave.disabled = false; btnSave.textContent = "Speichern"; }
+                });
+
+                const confirm = root.querySelector("#sta-confirm");
+                const btnErase = root.querySelector("#sta-btn-erase");
+                const eraseMsg = root.querySelector("#sta-erase-msg");
+                const btnReload = root.querySelector("#sta-btn-reload");
+                if (confirm && btnErase) {
+                    confirm.addEventListener("input", () => {
+                        const ok = confirm.value.trim().toUpperCase() === "BESTÄTIGEN";
+                        btnErase.disabled = !ok;
+                        if (eraseMsg) eraseMsg.textContent = ok ? "Bereit zum Löschen." : "";
+                    });
+                    btnErase.addEventListener("click", async () => {
+                        if (btnErase.disabled) return;
+                        btnErase.disabled = true; btnErase.textContent = "Wird gelöscht…";
+                        if (eraseMsg) eraseMsg.textContent = "Anmeldedaten werden gelöscht und Neustart…";
+                        try {
+                            const body = new URLSearchParams(); body.set("confirm", "BESTÄTIGEN");
+                            await fetch("/erase", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
+                            if (btnReload) btnReload.style.display = "inline-block";
+                        } catch (e) {
+                            console.error(e);
+                            if (eraseMsg) eraseMsg.textContent = "Fehler beim Anfordern der Löschung.";
+                            btnErase.disabled = false; btnErase.textContent = "🗑️ Anmeldedaten löschen und neu starten";
+                        }
+                    });
+                    if (btnReload) btnReload.addEventListener("click", () => location.reload());
+                }
+            };
+
+            const setupAp = () => {
+                const $ = (sel) => root.querySelector(sel);
+                const els = {
+                    list: $("#ap-list"), empty: $("#ap-empty"), status: $("#ap-status"),
+                    filter: $("#ap-filter"), auto: $("#ap-auto"), btnScan: $("#ap-btn-scan"),
+                    ssid: $("#ap-ssid"), pass: $("#ap-password"), show: $("#ap-show"),
+                    form: $("#ap-form"), btnSave: $("#ap-btn-save"),
+                    apHost: root.querySelector("[data-ap-host]"), portalUrl: $("#ap-portal-url"),
+                    confirm: $("#ap-confirm"), btnErase: $("#ap-btn-erase"), eraseMsg: $("#ap-erase-msg"), btnReload: $("#ap-btn-reload"),
+                    autoTxt: $("#ap-autoTxt")
+                };
+                if (els.apHost) els.apHost.textContent = "AP: " + (location.hostname || "192.168.4.1");
+                if (els.portalUrl) els.portalUrl.textContent = "http://" + (location.host || "192.168.4.1");
+                if (els.autoTxt) els.autoTxt.textContent = "Auto 30s";
+
+                const rssiLevel = (rssi) => rssi >= -50 ? 4 : rssi >= -60 ? 3 : rssi >= -70 ? 2 : rssi >= -80 ? 1 : 0;
+                const bars = (rssi) => {
+                    const wrap = document.createElement("span"); wrap.className = "bars";
+                    const lvl = rssiLevel(rssi);
+                    for (let i = 0; i < 5; i++) {
+                        const b = document.createElement("span"); b.style.height = 5 + i * 2 + "px"; if (i <= lvl) b.className = "on"; wrap.appendChild(b);
+                    }
+                    return wrap;
+                };
+                const qualityTag = (rssi) => {
+                    let text = "Schlecht", cls = "bad";
+                    if (rssi >= -60) { text = "Gut"; cls = "good"; }
+                    else if (rssi >= -67) { text = "Mittel"; cls = "mid"; }
+                    else if (rssi >= -75) { text = "Schwach"; cls = "weak"; }
+                    const span = document.createElement("span"); span.className = "qual " + cls; span.textContent = text; return span;
+                };
+                const dedupeBest = (list) => { const best = new Map(); for (const it of list) { if (!it || !it.ssid) continue; const cur = best.get(it.ssid); if (!cur || it.rssi > cur.rssi) best.set(it.ssid, it); } return Array.from(best.values()); };
+                const render = (list) => {
+                    const q = (els.filter.value || "").toLowerCase().trim();
+                    let arr = dedupeBest(list).sort((a, b) => b.rssi - a.rssi);
+                    if (q) arr = arr.filter((n) => n.ssid.toLowerCase().includes(q));
+                    els.list.innerHTML = "";
+                    if (!arr.length) { els.empty.style.display = "block"; return; }
+                    els.empty.style.display = "none";
+                    for (const n of arr) {
+                        const li = document.createElement("li");
+                        li.className = "item"; li.dataset.ssid = n.ssid; li.dataset.secure = !!n.secure;
+                        const lock = document.createElement("span"); lock.className = "lock"; lock.textContent = n.secure ? "🔒" : "🔓";
+                        // textContent statt innerHTML: SSIDs sind fremde Eingaben (XSS)
+                        const name = document.createElement("div");
+                        const ssidEl = document.createElement("div"); ssidEl.className = "ssid"; ssidEl.textContent = n.ssid;
+                        const metaEl = document.createElement("div"); metaEl.className = "meta"; metaEl.textContent = n.rssi + " dBm";
+                        name.appendChild(ssidEl); name.appendChild(metaEl);
+                        const sig = bars(n.rssi); const qual = qualityTag(n.rssi);
+                        const right = document.createElement("div"); right.className = "sigwrap"; right.appendChild(qual); right.appendChild(sig);
+                        li.appendChild(lock); li.appendChild(name); li.appendChild(right); els.list.appendChild(li);
+                    }
+                };
+
+                let lastScan = []; let timer = null;
+                const stopAuto = () => { if (timer) { clearTimeout(timer); timer = null; } };
+                const scan = async () => {
+                    const pollResult = async (maxTry = 60, delayMs = 250) => { // 15s > Server-Timeout (10s)
+                        for (let i = 0; i < maxTry; i++) {
+                            const r = await fetch("/scan/result", { cache: "no-store" });
+                            if (r.status === 202) {
+                                await new Promise(res => setTimeout(res, delayMs));
+                                continue;
+                            }
+                            if (!r.ok) throw new Error("HTTP " + r.status);
+                            const data = await r.json();
+                            return Array.isArray(data) ? data : [];
+                        }
+                        throw new Error("Scan-Timeout");
+                    };
+
+                    try {
+                        els.btnScan.disabled = true;
+                        els.status.textContent = "Wird gescannt…";
+
+                        const start = await fetch("/scan", { cache: "no-store" });
+                        if (!start.ok && start.status !== 202) throw new Error("HTTP " + start.status);
+
+                        let data;
+                        if (start.status === 202) {
+                            data = await pollResult();
+                        } else {
+                            const j = await start.json();
+                            data = Array.isArray(j) ? j : [];
+                        }
+
+                        lastScan = data;
+                        render(lastScan);
+                        els.status.textContent = `Bereit. ${lastScan.length} Netzwerke`;
+                    } catch (e) {
+                        console.error(e);
+                        els.status.textContent = "Fehler beim Scannen. Versuchen Sie es erneut.";
+                    } finally {
+                        els.btnScan.disabled = false;
+                    }
+
+                    if (els.auto.checked) timer = setTimeout(scan, 30000);
+                };
+
+                els.btnScan.addEventListener("click", () => { stopAuto(); scan(); });
+                els.filter.addEventListener("input", () => render(lastScan));
+                els.auto.addEventListener("change", () => { stopAuto(); if (els.auto.checked) scan(); });
+                els.list.addEventListener("click", (ev) => {
+                    const li = ev.target.closest(".item"); if (!li) return;
+                    [...els.list.children].forEach((n) => n.classList.remove("selected"));
+                    li.classList.add("selected"); els.ssid.value = li.dataset.ssid || ""; els.ssid.dispatchEvent(new Event("input")); els.pass.focus();
+                });
+                els.show.addEventListener("change", () => { els.pass.type = els.show.checked ? "text" : "password"; });
+                els.form.addEventListener("submit", () => { els.btnSave.disabled = true; els.btnSave.textContent = "Wird gespeichert…"; });
+
+                document.querySelectorAll('input[name="ap-dhcp"]').forEach(r => r.addEventListener("change", function () {
+                    const isStatic = document.querySelector('input[name="ap-dhcp"]:checked').value === "false";
+                    const sf = document.getElementById('ap-static');
+                    sf.style.display = isStatic ? "block" : "none";
+                    sf.querySelectorAll("input").forEach(i => i.disabled = !isStatic);
+                }));
+
+                if (els.confirm && els.btnErase) {
+                    els.confirm.addEventListener("input", () => {
+                        const ok = els.confirm.value.trim().toUpperCase() === "BESTÄTIGEN";
+                        els.btnErase.disabled = !ok; if (els.eraseMsg) els.eraseMsg.textContent = ok ? "Bereit zum Löschen." : "";
+                    });
+                    els.btnErase.addEventListener("click", async () => {
+                        if (els.btnErase.disabled) return;
+                        els.btnErase.disabled = true; els.btnErase.textContent = "Wird gelöscht…";
+                        if (els.eraseMsg) els.eraseMsg.textContent = "Anmeldedaten werden gelöscht und Neustart…";
+                        try {
+                            const body = new URLSearchParams(); body.set("confirm", "BESTÄTIGEN");
+                            await fetch("/erase", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, });
+                            if (els.btnReload) els.btnReload.style.display = "inline-block";
+                        } catch (e) {
+                            console.error(e);
+                            if (els.eraseMsg) els.eraseMsg.textContent = "Fehler beim Anfordern der Löschung.";
+                            els.btnErase.disabled = false; els.btnErase.textContent = "🗑️ Anmeldedaten löschen und neu starten";
+                        }
+                    });
+                }
+                if (els.btnReload) els.btnReload.addEventListener("click", () => location.reload());
+
+                // Prefill config if available
+                (async () => {
+                    try {
+                        const resp = await fetch('/api/ap/config', { cache: 'no-store' });
+                        if (!resp.ok) return;
+                        const data = await resp.json(); if (!data) return;
+                        if (data.ssid) els.ssid.value = data.ssid;
+                        // Passwort wird nicht ausgeliefert: leeres Feld = gespeichertes Passwort behalten
+                        if (data.hasPassword) {
+                            els.pass.required = false;
+                            els.pass.placeholder = "Unverändert (gespeichert)";
+                            const savedSsid = data.ssid || "";
+                            els.ssid.addEventListener("input", () => { els.pass.required = els.ssid.value !== savedSsid; });
+                        }
+                        if (data.dhcp !== undefined) {
+                            const dhcpVal = data.dhcp ? "true" : "false";
+                            const dhcpRadio = document.querySelector('input[name="ap-dhcp"][value="' + dhcpVal + '"]');
+                            if (dhcpRadio) dhcpRadio.checked = true;
+                            dhcpRadio && dhcpRadio.dispatchEvent(new Event('change'));
+                        }
+                        if (data.ip) $("#ap-ip").value = data.ip;
+                        if (data.gw) $("#ap-gw").value = data.gw;
+                        if (data.sn) $("#ap-sn").value = data.sn;
+                        if (data.dns1) $("#ap-dns1").value = data.dns1;
+                        if (data.dns2) $("#ap-dns2").value = data.dns2;
+                        if (data.hostname) $("#ap-hostname").value = data.hostname;
+                        if (data.ntp1) $("#ap-ntp1").value = data.ntp1;
+                        if (data.ntp2) $("#ap-ntp2").value = data.ntp2;
+                    } catch { }
+                })();
+
+                scan();
+            };
+
+            (async () => {
+                const staCfg = await tryLoadStaConfig();
+                if (staCfg) { render("tmpl-sta"); setupSta(staCfg); }
+                else { render("tmpl-ap"); setupAp(); }
+            })();
+        })();
+    </script>
+</body>
+</html>

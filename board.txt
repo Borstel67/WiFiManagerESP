@@ -1,0 +1,19 @@
+# WiFiManagerESP build property overrides
+#
+build.partitions=partitions.csv
+build.filesystem=littlefs
+
+menu.PartitionScheme.custom=Custom Partition
+menu.PartitionScheme.custom.build.partitions=partitions.csv
+
+menu.fsupload.littlefs=LittleFS
+menu.fsupload.littlefs.build.filesystem=littlefs
+menu.fsupload.littlefs.runtime.tools.mkspiffs.path={runtime.tools.mklittlefs.path}
+
+runtime.tools.mklittlefs.path=C:/Users/Ralf.BORSTEL/AppData/Local/arduino15/packages/esp32/tools/mklittlefs/4.0.2-db0513a
+runtime.tools.mkspiffs.path={runtime.tools.mklittlefs.path}
+
+
+# recipe.wwwfiles.upload.pattern="{vm.path}/{tools.wwwfiles.cmd}" -serial.port={serial.port} -build.path="{build.path}" -target_platform="{target_platform}" -runtime.tools.mkspiffs.path="{runtime.tools.mkspiffs.path}" -board.name="{name}" -upload.verbose={upload.verbose} -upload.resetmethod={upload.resetmethod} -upload.speed={upload.speed} -platform.path="{platform.path}" -project.name="{project.name}" -project.path="{project.path}" -tools.esptool.cmd="{tools.esptool.cmd}" -tools.esptool.cmd.windows="{tools.esptool.cmd.windows}" -runtime.tools.esptool.path="{runtime.tools.esptool.path}" -compiler.path="{compiler.path}" -build.spiffs_start="{build.spiffs_start}" -build.spiffs_end="{build.spiffs_end}" -build.spiffs_pagesize="{build.spiffs_pagesize}" -build.spiffs_blocksize="{build.spiffs_blocksize}" -build.partitions="{build.partitions}" -network.password={network.password} -network.auth_upload={network.auth_upload} -network.port={network.port} -upload.tool={upload.tool} -tools.esptool_py.cmd="{tools.esptool_py.cmd}" -tools.esptool_py.cmd.windows="{tools.esptool_py.cmd.windows}" -runtime.tools.esptool_py.path="{runtime.tools.esptool_py.path}" -build.flash_mode={build.flash_mode} -build.flash_freq={build.flash_freq} && powershell -Command "Get-ChildItem '{build.path}' -Filter *.littlefs.bin -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | Copy-Item -Destination '{sketch_path}\littlefs.bin' -Force"
+# recipe.wwwfiles.upload.pattern=powershell.exe -ExecutionPolicy Bypass -File ".\LittleFS.ps1 -Flash -Port COM4"
+# recipe.hooks.postbuild.1.pattern=powershell.exe -ExecutionPolicy Bypass -File "{ProjectDir}\LittleFS.ps1"
